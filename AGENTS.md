@@ -1,6 +1,19 @@
-# Expo HAS CHANGED
+# Expo 56 (SDK 56)
+
+This project uses **Expo SDK 56** with **Expo Router v4**.
 
 Read the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing any code.
+
+Key changes in Expo 56 / Expo Router v4:
+- `src/app/` is the recommended root for all routes (file-based routing via Expo Router v4)
+- `_layout.tsx` defines the root layout and nested navigators
+- Route groups use `(group)/` folders — no URL segment added
+- Dynamic routes use `[param]/` folders or files
+- API routes live in `app/api/` and use `+api.ts` suffix (server-only, not bundled in the client)
+- `+not-found.tsx` handles unmatched routes
+- `expo-router/entry` replaces the old `registerRootComponent` pattern
+- `useLocalSearchParams` / `useGlobalSearchParams` replace `useSearchParams`
+- Stack, Tabs, and Drawer navigators are configured inside `_layout.tsx` files, not in `app.json`
 
 
 ---
@@ -89,28 +102,59 @@ Do not install or use new libraries without user approval.
 
 ## Architecture Guidelines
 
+This project uses **Expo SDK 56** with **Expo Router v4** and the `src/` directory layout.
+
 Use this structure unless there is a strong reason to change it:
 
 ```txt
-app/
-  (auth)/
-  (tabs)/
-  lesson/
-components/
-constants/
-data/
-hooks/
-lib/
-store/
-types/
+src/
+  app/                        ← all routes live here (Expo Router v4)
+    _layout.tsx               ← root layout (fonts, providers, global setup)
+    +not-found.tsx            ← 404 fallback route
+    (auth)/                   ← route group, no URL segment
+      _layout.tsx
+      sign-in.tsx
+      sign-up.tsx
+    (tabs)/                   ← route group for bottom tab navigator
+      _layout.tsx
+      index.tsx               ← home / learn tab
+      profile.tsx
+    lesson/
+      [id].tsx                ← dynamic lesson route
+    api/                      ← server-only API routes (Expo Router API routes)
+      token+api.ts
+  components/
+  constants/
+  data/
+  hooks/
+  lib/
+  store/
+  types/
 assets/
+  images/
+  fonts/
 ```
 
 ### app/
 
-Use this for routes and screens only.
+Use this for routes and screens only (Expo Router v4 file-based routing).
+
+- Every file in `app/` automatically becomes a route
+- `_layout.tsx` configures the navigator for its segment (Stack, Tabs, Drawer)
+- Route groups `(group)/` organize routes without affecting the URL
+- Dynamic segments use `[param].tsx` or `[param]/` folders
+- API routes use the `+api.ts` suffix and run server-side only — never import client-side code in them
 
 Screens should compose components and call hooks/stores, but should not contain large reusable UI blocks or complex business logic.
+
+### app/api/
+
+Use for server-side API route handlers (Expo Router v4 API routes).
+
+- File must end in `+api.ts`
+- Export named handlers: `GET`, `POST`, `PUT`, `DELETE`
+- Use this for secure operations: Stream tokens, AI calls, secret handling
+- These files are **never bundled** into the client app
 
 ### components/
 
