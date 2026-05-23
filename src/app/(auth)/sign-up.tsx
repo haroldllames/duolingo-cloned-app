@@ -1,6 +1,8 @@
+import { useSSO, useSignUp } from "@clerk/expo";
 import { images } from "@/constants/images";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
 import {
   Image,
@@ -21,10 +23,18 @@ function VerificationModal({
   visible,
   email,
   onClose,
+  onVerify,
+  onResend,
+  isLoading,
+  errorMessage,
 }: {
   visible: boolean;
   email: string;
   onClose: () => void;
+  onVerify: (code: string) => void;
+  onResend: () => void;
+  isLoading: boolean;
+  errorMessage?: string;
 }) {
   const [code, setCode] = useState("");
   const inputRef = useRef<TextInput>(null);
@@ -38,8 +48,8 @@ function VerificationModal({
   }, [visible]);
 
   useEffect(() => {
-    if (code.length === 6) {
-      router.replace("/");
+    if (code.length === 6 && !isLoading) {
+      onVerify(code);
     }
   }, [code]);
 
@@ -75,7 +85,6 @@ function VerificationModal({
             </Text>
           </Text>
 
-          {/* Hidden real input drives all digit capture */}
           <TextInput
             ref={inputRef}
             value={code}
@@ -89,7 +98,7 @@ function VerificationModal({
 
           <TouchableOpacity
             onPress={() => inputRef.current?.focus()}
-            className="flex-row gap-2.5 mb-7"
+            className="flex-row gap-2.5 mb-4"
             activeOpacity={1}
           >
             {Array.from({ length: 6 }).map((_, i) => (
@@ -110,9 +119,16 @@ function VerificationModal({
             ))}
           </TouchableOpacity>
 
-          <Text className="body-md text-text-secondary">
+          {errorMessage ? (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          ) : null}
+
+          <Text className="body-md text-text-secondary mt-2">
             Didn't receive it?{" "}
-            <Text className="font-poppins-semibold text-lingua-purple">
+            <Text
+              className="font-poppins-semibold text-lingua-purple"
+              onPress={onResend}
+            >
               Resend
             </Text>
           </Text>
@@ -123,14 +139,66 @@ function VerificationModal({
 }
 
 export default function SignUpScreen() {
+  const { signUp, errors, fetchStatus } = useSignUp();
+  const { startSSOFlow } = useSSO();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [verifyError, setVerifyError] = useState("");
+  const [oauthLoading, setOauthLoading] = useState(false);
 
-  const handleSignUp = () => {
-    if (email.trim()) {
+  useEffect(() => {
+    void WebBrowser.warmUpAsync();
+    return () => { void WebBrowser.coolDownAsync(); };
+  }, []);
+
+  const handleSignUp = async () => {
+    if (!email.trim() || !password) return;
+    setVerifyError("");
+    const { error } = await signUp.password({
+      emailAddress: email.trim(),
+      password,
+    });
+    if (error) return;
+    const { error: sendError } = await signUp.verifications.sendEmailCode();
+    if (!sendError) {
       setShowModal(true);
+    }
+  };
+
+  const handleVerify = async (code: string) => {
+    setVerifyError("");
+    const { error } = await signUp.verifications.verifyEmailCode({ code });
+    if (error) {
+      setVerifyError(error.message ?? "Invalid code, please try again.");
+      return;
+    }
+    if (signUp.status === "complete") {
+      await signUp.finalize();
+      router.replace("/");
+    }
+  };
+
+  const handleResend = async () => {
+    await signUp.verifications.sendEmailCode();
+  };
+
+  const handleOAuth = async (strategy: "oauth_google" | "oauth_facebook") => {
+    if (oauthLoading) return;
+    setOauthLoading(true);
+    try {
+      const { createdSessionId, setActive, authSessionResult } = await startSSOFlow({ strategy });
+      if (authSessionResult?.type !== "success") return;
+      if (createdSessionId && setActive) {
+        await setActive({ session: createdSessionId });
+        router.replace("/");
+      }
+    } catch (err) {
+      console.error("OAuth error:", err);
+    } finally {
+      setOauthLoading(false);
     }
   };
 
@@ -181,9 +249,12 @@ export default function SignUpScreen() {
             onChangeText={setEmail}
           />
         </View>
+        {errors.fields.emailAddress?.message ? (
+          <Text style={styles.errorText}>{errors.fields.emailAddress.message}</Text>
+        ) : null}
 
         {/* Password input card */}
-        <View className="border border-border rounded-xl px-3.5 pt-2.5 pb-2.5 bg-white mb-6">
+        <View className="border border-border rounded-xl px-3.5 pt-2.5 pb-2.5 bg-white mb-3">
           <Text className="font-poppins text-[12px] text-text-secondary mb-0.5">
             Password
           </Text>
@@ -208,14 +279,21 @@ export default function SignUpScreen() {
             </TouchableOpacity>
           </View>
         </View>
+        {errors.fields.password?.message ? (
+          <Text style={styles.errorText}>{errors.fields.password.message}</Text>
+        ) : null}
 
-        {/* Sign Up — reuses the btn-primary global utility */}
+        {/* Sign Up */}
         <TouchableOpacity
           className="btn-primary mb-5"
+          style={fetchStatus === "fetching" ? { opacity: 0.6 } : undefined}
           onPress={handleSignUp}
           activeOpacity={0.85}
+          disabled={fetchStatus === "fetching"}
         >
-          <Text className="body-lg font-poppins-semibold text-white">Sign Up</Text>
+          <Text className="body-lg font-poppins-semibold text-white">
+            {fetchStatus === "fetching" ? "Creating account…" : "Sign Up"}
+          </Text>
         </TouchableOpacity>
 
         {/* Divider */}
@@ -226,7 +304,10 @@ export default function SignUpScreen() {
         {/* Google */}
         <TouchableOpacity
           className="flex-row items-center border border-border rounded-xl py-3.5 px-4 bg-white mb-3"
+          style={oauthLoading ? { opacity: 0.6 } : undefined}
           activeOpacity={0.85}
+          onPress={() => handleOAuth("oauth_google")}
+          disabled={oauthLoading}
         >
           <View className="w-6 items-center">
             <Ionicons name="logo-google" size={20} color="#DB4437" />
@@ -239,7 +320,10 @@ export default function SignUpScreen() {
         {/* Facebook */}
         <TouchableOpacity
           className="flex-row items-center border border-border rounded-xl py-3.5 px-4 bg-white mb-3"
+          style={oauthLoading ? { opacity: 0.6 } : undefined}
           activeOpacity={0.85}
+          onPress={() => handleOAuth("oauth_facebook")}
+          disabled={oauthLoading}
         >
           <View className="w-6 items-center">
             <Ionicons name="logo-facebook" size={20} color="#1877F2" />
@@ -249,7 +333,7 @@ export default function SignUpScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* Apple */}
+        {/* Apple — shown in UI but not yet wired (requires dev build + Apple config) */}
         <TouchableOpacity
           className="flex-row items-center border border-border rounded-xl py-3.5 px-4 bg-white mb-3"
           activeOpacity={0.85}
@@ -273,21 +357,24 @@ export default function SignUpScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Required for Clerk's bot protection */}
+        <View nativeID="clerk-captcha" />
       </ScrollView>
 
       <VerificationModal
         visible={showModal}
         email={email}
         onClose={() => setShowModal(false)}
+        onVerify={handleVerify}
+        onResend={handleResend}
+        isLoading={fetchStatus === "fetching"}
+        errorMessage={verifyError}
       />
     </SafeAreaView>
   );
 }
 
-// StyleSheet kept only for the three required exceptions:
-// 1. contentContainerStyle on ScrollView (special prop, no className support)
-// 2. TextInput text styles (padding: 0 resets native default insets)
-// 3. Hidden OTP input (position absolute + zero dimensions)
 const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
@@ -305,5 +392,11 @@ const styles = StyleSheet.create({
     opacity: 0,
     height: 0,
     width: 0,
+  },
+  errorText: {
+    fontFamily: "Poppins-Regular",
+    fontSize: 12,
+    color: "#DC2626",
+    marginBottom: 8,
   },
 });
