@@ -20,7 +20,7 @@ export const languages: Language[] = [
     totalLearners: 2800000,
   },
   {
-    code: 'jp',
+    code: 'ja',
     name: 'Japanese',
     nativeName: '日本語',
     flag: `https://flagcdn.com/w320/jp.png`,

@@ -1,10 +1,10 @@
-import { useSSO, useSignUp } from "@clerk/expo";
 import { images } from "@/constants/images";
+import { useSSO, useSignUp } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { useEffect, useRef, useState } from "react";
 import { usePostHog } from "posthog-react-native";
+import { useEffect, useRef, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -19,6 +19,26 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+function sanitizeErrorForTelemetry(error: unknown): string {
+  if (!error) return "unknown_error";
+  // Prefer structured identifiers when available
+  // @ts-ignore
+  if (typeof error === "object" && error !== null && (error as any).type) {
+    // @ts-ignore
+    return String((error as any).type);
+  }
+  // @ts-ignore
+  if (typeof error === "object" && error !== null && (error as any).code) {
+    // @ts-ignore
+    return String((error as any).code);
+  }
+  const msg = String((error as any)?.message ?? String(error));
+  const redacted = msg
+    .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, "[REDACTED_EMAIL]")
+    .replace(/\+?\d[\d\s().-]{6,}\d/g, "[REDACTED_PHONE]");
+  return redacted.slice(0, 120) || "unknown_error";
+}
 
 function VerificationModal({
   visible,
@@ -175,7 +195,9 @@ export default function SignUpScreen() {
     const { error } = await signUp.verifications.verifyEmailCode({ code });
     if (error) {
       setVerifyError(error.message ?? "Invalid code, please try again.");
-      posthog.capture("sign_up_verification_failed", { error_message: error.message });
+      posthog.capture("sign_up_verification_failed", {
+        error_identifier: sanitizeErrorForTelemetry(error),
+      });
       return;
     }
     if (signUp.status === "complete") {

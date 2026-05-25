@@ -5,10 +5,20 @@ import { tokenCache } from "@clerk/expo/token-cache";
 import { useFonts } from "expo-font";
 import { Stack, useGlobalSearchParams, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useRef } from "react";
 import { PostHogProvider } from "posthog-react-native";
+import { useEffect, useRef } from "react";
 
 import { posthog } from "@/lib/posthog";
+
+const SAFE_ROUTE_PARAMS = ["lessonId", "unitId", "languageCode"] as const;
+
+function filterSafeParams(params: Record<string, string | string[] | undefined>) {
+  return Object.entries(params).reduce<Record<string, string>>((acc, [key, value]) => {
+    if (!SAFE_ROUTE_PARAMS.includes(key as any) || value == null) return acc;
+    acc[key] = Array.isArray(value) ? value.join(",") : value;
+    return acc;
+  }, {});
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,9 +48,11 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (previousPathname.current !== pathname) {
+      const safeParams = filterSafeParams(params);
       posthog.screen(pathname, {
+        pathname,
         previous_screen: previousPathname.current ?? null,
-        ...params,
+        ...safeParams,
       });
       previousPathname.current = pathname;
     }

@@ -326,8 +326,8 @@ export const frenchUnit1Lessons: Lesson[] = [
 
 export const japaneseUnit1Lessons: Lesson[] = [
   {
-    id: 'jp-u1-l1',
-    unitId: 'jp-u1',
+    id: 'ja-u1-l1',
+    unitId: 'ja-u1',
     order: 1,
     title: 'こんにちは (Konnichiwa)',
     description: 'Learn basic Japanese greetings.',
@@ -340,7 +340,7 @@ export const japaneseUnit1Lessons: Lesson[] = [
     ],
     activities: [
       {
-        id: 'jp-u1-l1-a1',
+        id: 'ja-u1-l1-a1',
         type: 'vocabulary',
         title: 'Japanese Greetings',
         description: 'Learn everyday Japanese greetings.',
@@ -383,7 +383,7 @@ export const japaneseUnit1Lessons: Lesson[] = [
         ],
       },
       {
-        id: 'jp-u1-l1-a2',
+        id: 'ja-u1-l1-a2',
         type: 'quiz',
         title: 'Japanese Greetings Quiz',
         description: 'Test your Japanese greeting knowledge.',

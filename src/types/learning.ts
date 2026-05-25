@@ -1,4 +1,4 @@
-export type LanguageCode = 'es' | 'fr' | 'jp' | 'de';
+export type LanguageCode = 'es' | 'fr' | 'ja' | 'de';
 
 export type ActivityType = 'vocabulary' | 'phrase' | 'quiz' | 'listen' | 'speak';
 

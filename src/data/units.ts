@@ -1,9 +1,9 @@
 import type { Unit } from '@/types/learning';
 import {
-  spanishUnit1Lessons,
-  frenchUnit1Lessons,
-  japaneseUnit1Lessons,
-  germanUnit1Lessons,
+    frenchUnit1Lessons,
+    germanUnit1Lessons,
+    japaneseUnit1Lessons,
+    spanishUnit1Lessons,
 } from './lessons';
 
 export const units: Unit[] = [
@@ -33,8 +33,8 @@ export const units: Unit[] = [
 
   // ─── Japanese ─────────────────────────────────────────────────────────────
   {
-    id: 'jp-u1',
-    languageCode: 'jp',
+    id: 'ja-u1',
+    languageCode: 'ja',
     order: 1,
     title: 'Getting Started',
     description: 'Learn Japanese greetings and the basics of formal and informal speech.',
