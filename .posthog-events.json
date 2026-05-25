@@ -1,0 +1,57 @@
+[
+  {
+    "event": "sign_up_completed",
+    "description": "User successfully completes email+password sign-up and verifies their email code",
+    "file": "src/app/(auth)/sign-up.tsx"
+  },
+  {
+    "event": "sign_up_oauth_completed",
+    "description": "User successfully signs up via Google or Facebook OAuth",
+    "file": "src/app/(auth)/sign-up.tsx"
+  },
+  {
+    "event": "sign_up_verification_failed",
+    "description": "User enters an invalid verification code during sign-up email verification",
+    "file": "src/app/(auth)/sign-up.tsx"
+  },
+  {
+    "event": "sign_in_completed",
+    "description": "User successfully signs in with email code verification",
+    "file": "src/app/(auth)/sign-in.tsx"
+  },
+  {
+    "event": "sign_in_oauth_completed",
+    "description": "User successfully signs in via Google or Facebook OAuth",
+    "file": "src/app/(auth)/sign-in.tsx"
+  },
+  {
+    "event": "sign_in_failed",
+    "description": "User enters an invalid verification code during sign-in",
+    "file": "src/app/(auth)/sign-in.tsx"
+  },
+  {
+    "event": "onboarding_get_started_tapped",
+    "description": "User taps Get Started on the onboarding screen — top of the conversion funnel",
+    "file": "src/app/onboarding.tsx"
+  },
+  {
+    "event": "language_selected",
+    "description": "User confirms a language selection and proceeds to the main app",
+    "file": "src/app/language-selection.tsx"
+  },
+  {
+    "event": "continue_learning_tapped",
+    "description": "User taps the Continue button on the home screen to resume their current unit",
+    "file": "src/app/(tabs)/index.tsx"
+  },
+  {
+    "event": "today_plan_item_tapped",
+    "description": "User taps an item in the Today's Plan section on the home screen",
+    "file": "src/app/(tabs)/index.tsx"
+  },
+  {
+    "event": "next_up_ai_video_call_tapped",
+    "description": "User taps the Next Up / AI Video Call card on the home screen",
+    "file": "src/app/(tabs)/index.tsx"
+  }
+]

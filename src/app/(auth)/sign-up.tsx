@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
+import { usePostHog } from "posthog-react-native";
 import {
   Image,
   KeyboardAvoidingView,
@@ -141,6 +142,7 @@ function VerificationModal({
 export default function SignUpScreen() {
   const { signUp, errors, fetchStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
+  const posthog = usePostHog();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -173,9 +175,15 @@ export default function SignUpScreen() {
     const { error } = await signUp.verifications.verifyEmailCode({ code });
     if (error) {
       setVerifyError(error.message ?? "Invalid code, please try again.");
+      posthog.capture("sign_up_verification_failed", { error_message: error.message });
       return;
     }
     if (signUp.status === "complete") {
+      posthog.identify(email.trim(), {
+        $set: { email: email.trim() },
+        $set_once: { sign_up_date: new Date().toISOString() },
+      });
+      posthog.capture("sign_up_completed", { method: "email_password" });
       await signUp.finalize();
       router.replace("/");
     }
@@ -193,6 +201,7 @@ export default function SignUpScreen() {
       if (authSessionResult?.type !== "success") return;
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
+        posthog.capture("sign_up_oauth_completed", { method: strategy });
         router.replace("/");
       }
     } catch (err) {

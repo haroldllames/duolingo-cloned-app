@@ -10,10 +10,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { usePostHog } from "posthog-react-native";
 
 import { images } from "@/constants/images";
 import { languages } from "@/data/languages";
-import type { Language } from "@/types/learning";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import type { Language, LanguageCode } from "@/types/learning";
 
 function formatLearners(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M learners`;
@@ -24,6 +26,8 @@ function formatLearners(n: number): string {
 export default function LanguageSelection() {
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
+  const setSelectedLanguage = useLanguageStore((s) => s.setSelectedLanguage);
+  const posthog = usePostHog();
 
   const filtered = languages.filter(
     (lang) =>
@@ -115,7 +119,13 @@ export default function LanguageSelection() {
           activeOpacity={0.85}
           disabled={!selectedCode}
           style={{ opacity: selectedCode ? 1 : 0.45 }}
-          onPress={() => router.back()}
+          onPress={() => {
+            if (selectedCode) {
+              posthog.capture("language_selected", { language_code: selectedCode });
+              setSelectedLanguage(selectedCode as LanguageCode);
+              router.replace("/");
+            }
+          }}
         >
           <Text className="body-lg font-poppins-semibold text-white">
             {selectedCode ? "Start Learning" : "Select a Language"}
