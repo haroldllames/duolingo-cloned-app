@@ -72,6 +72,7 @@ export interface Lesson {
   duration: number;
   difficulty: DifficultyLevel;
   xpReward: number;
+  image?: string;
   goals: LessonGoal[];
   activities: Activity[];
   aiTeacherPrompt: AITeacherPrompt;
