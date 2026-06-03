@@ -9,6 +9,7 @@ export default {
     userInterfaceStyle: "automatic",
     ios: {
       icon: "./assets/expo.icon",
+      bundleIdentifier: "com.haroldllames.duolingoapp",
     },
     android: {
       adaptiveIcon: {
