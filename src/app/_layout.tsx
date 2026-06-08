@@ -7,7 +7,9 @@ import { Stack, useGlobalSearchParams, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { PostHogProvider } from "posthog-react-native";
 import { useEffect, useRef } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { StreamVideoProvider } from "@/components/StreamVideoProvider";
 import { posthog } from "@/lib/posthog";
 
 const SAFE_ROUTE_PARAMS = ["lessonId", "unitId", "languageCode"] as const;
@@ -73,7 +75,11 @@ export default function RootLayout() {
       }}
     >
       <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-        <Stack screenOptions={{ headerShown: false }} />
+        <SafeAreaProvider>
+          <StreamVideoProvider>
+            <Stack screenOptions={{ headerShown: false }} />
+          </StreamVideoProvider>
+        </SafeAreaProvider>
       </ClerkProvider>
     </PostHogProvider>
   );

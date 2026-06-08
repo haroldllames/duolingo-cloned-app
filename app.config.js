@@ -8,10 +8,10 @@ export default {
     scheme: "duolingoapp",
     userInterfaceStyle: "automatic",
     ios: {
-      icon: "./assets/expo.icon",
       bundleIdentifier: "com.haroldllames.duolingoapp",
     },
     android: {
+      package: "com.haroldllames.duolingoapp",
       adaptiveIcon: {
         backgroundColor: "#E6F4FE",
         foregroundImage: "./assets/images/android-icon-foreground.png",
@@ -28,6 +28,22 @@ export default {
       "expo-router",
       "expo-secure-store",
       "@clerk/expo",
+      "@stream-io/video-react-native-sdk",
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          cameraPermission:
+            "$(PRODUCT_NAME) needs camera access for video lessons.",
+          microphonePermission:
+            "$(PRODUCT_NAME) needs microphone access so the AI teacher can hear you.",
+        },
+      ],
+      [
+        "expo-build-properties",
+        {
+          android: { minSdkVersion: 24 },
+        },
+      ],
       [
         "expo-splash-screen",
         {
@@ -46,6 +62,7 @@ export default {
     extra: {
       posthogProjectToken: process.env.POSTHOG_PROJECT_TOKEN,
       posthogHost: process.env.POSTHOG_HOST,
+      streamApiKey: process.env.EXPO_PUBLIC_STREAM_API_KEY,
     },
   },
 };
